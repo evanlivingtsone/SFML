@@ -44,15 +44,9 @@ void ensureExtensionsInit(HDC deviceContext)
     static bool initialized = false;
     if (!initialized)
     {
-        int loaded = sfwgl_LoadFunctions(deviceContext);
-        if (loaded == sfwgl_LOAD_FAILED)
-        {
+        initialized = true;
+        if (sfwgl_LoadFunctions(deviceContext) == sfwgl_LOAD_FAILED)
             err() << "Failed to initialize WglExtensions" << std::endl;
-        }
-        else
-        {
-            initialized = true;
-        }
     }
 }
 
@@ -207,8 +201,15 @@ void WglContext::setVerticalSyncEnabled(bool enabled)
     }
     else
     {
-        // wglSwapIntervalEXT not supported
-        err() << "Setting vertical sync not supported" << std::endl;
+        static bool warned = false;
+
+        if (!warned)
+        {
+            // wglSwapIntervalEXT not supported
+            err() << "Setting vertical sync not supported" << std::endl;
+
+            warned = true;
+        }
     }
 }
 
@@ -407,8 +408,8 @@ void WglContext::createContext(WglContext* shared, unsigned int bitsPerPixel, co
     // If wglCreateContextAttribsARB failed, use wglCreateContext
     if (!m_context)
     {
-        // set the context version to 2.1 (arbitrary) and disable flags
-        m_settings.majorVersion = 2;
+        // set the context version to 1.1 (arbitrary) and disable flags
+        m_settings.majorVersion = 1;
         m_settings.minorVersion = 1;
         m_settings.attributeFlags = ContextSettings::Default;
 
