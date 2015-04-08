@@ -309,7 +309,7 @@ XVisualInfo GlxContext::selectBestVisual(::Display* display, unsigned int bitsPe
     if (visuals)
     {
         // Evaluate all the returned visuals, and pick the best one
-        int bestScore = 0xFFFF;
+        int bestScore = 0x7FFFFFFF;
         XVisualInfo bestVisual;
         for (int i = 0; i < count; ++i)
         {
@@ -321,18 +321,30 @@ XVisualInfo GlxContext::selectBestVisual(::Display* display, unsigned int bitsPe
 
             // Extract the components of the current visual
             int red, green, blue, alpha, depth, stencil, multiSampling, samples;
-            glXGetConfig(display, &visuals[i], GLX_RED_SIZE,           &red);
-            glXGetConfig(display, &visuals[i], GLX_GREEN_SIZE,         &green);
-            glXGetConfig(display, &visuals[i], GLX_BLUE_SIZE,          &blue);
-            glXGetConfig(display, &visuals[i], GLX_ALPHA_SIZE,         &alpha);
-            glXGetConfig(display, &visuals[i], GLX_DEPTH_SIZE,         &depth);
-            glXGetConfig(display, &visuals[i], GLX_STENCIL_SIZE,       &stencil);
-            glXGetConfig(display, &visuals[i], GLX_SAMPLE_BUFFERS_ARB, &multiSampling);
-            glXGetConfig(display, &visuals[i], GLX_SAMPLES_ARB,        &samples);
+            glXGetConfig(display, &visuals[i], GLX_RED_SIZE,     &red);
+            glXGetConfig(display, &visuals[i], GLX_GREEN_SIZE,   &green);
+            glXGetConfig(display, &visuals[i], GLX_BLUE_SIZE,    &blue);
+            glXGetConfig(display, &visuals[i], GLX_ALPHA_SIZE,   &alpha);
+            glXGetConfig(display, &visuals[i], GLX_DEPTH_SIZE,   &depth);
+            glXGetConfig(display, &visuals[i], GLX_STENCIL_SIZE, &stencil);
+
+            if (sfglx_ext_ARB_multisample == sfglx_LOAD_SUCCEEDED)
+            {
+                glXGetConfig(display, &visuals[i], GLX_SAMPLE_BUFFERS_ARB, &multiSampling);
+                glXGetConfig(display, &visuals[i], GLX_SAMPLES_ARB,        &samples);
+            }
+            else
+            {
+                multiSampling = 0;
+                samples = 0;
+            }
+
+            // TODO: Replace this with proper acceleration detection
+            bool accelerated = true;
 
             // Evaluate the visual
             int color = red + green + blue + alpha;
-            int score = evaluateFormat(bitsPerPixel, settings, color, depth, stencil, multiSampling ? samples : 0);
+            int score = evaluateFormat(bitsPerPixel, settings, color, depth, stencil, multiSampling ? samples : 0, accelerated);
 
             // If it's better than the current best, make it the new best
             if (score < bestScore)
